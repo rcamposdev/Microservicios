@@ -1,8 +1,12 @@
 using ApiClientes.Models;
 using ApiClientes.Common;
 using Serilog;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Implementación de Serilog
 
 var logger = new LoggerConfiguration()
   .ReadFrom.Configuration(builder.Configuration)
@@ -10,6 +14,15 @@ var logger = new LoggerConfiguration()
   .CreateLogger();
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
+
+// Implementación de Instrumentación Automática
+
+builder.Services.AddOpenTelemetryTracing(b => {
+    b.SetResourceBuilder(
+        ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplicationName))
+     .AddAspNetCoreInstrumentation()
+     .AddOtlpExporter(opts => { opts.Endpoint = new Uri("http://localhost:4317"); });
+});
 
 var app = builder.Build();
 

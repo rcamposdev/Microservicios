@@ -159,4 +159,49 @@ docker-compose up
 
 Implementar Instrumentación Automática con Opentelemetry en los servicios ya realizados
 
-[OpenTelemetry 🔭 para la MONITORIZACIÓN y OBSERVABILIDAD en los sistemas distribuidos](https://www.youtube.com/watch?v=V8TvJK2hU54)
+**1. Agregar las referencias necesarias**
+
+```
+dotnet add ApiClientes.csproj package OpenTelemetry.Exporter.OpenTelemetryProtocol -v 1.2.0-rc3
+dotnet add ApiClientes.csproj package OpenTelemetry.Extensions.Hosting -v 1.0.0-rc9
+dotnet add ApiClientes.csproj package OpenTelemetry.Instrumentation.AspNetCore -v 1.0.0-rc9
+dotnet add ApiClientes.csproj package OpenTelemetry.Instrumentation.Http -v 1.0.0-rc9
+```
+
+**2. Agregar en la clase Program el siguiente codigo debajo de la declaración del builder**
+
+```
+builder.Services.AddOpenTelemetryTracing(b => {
+    b.SetResourceBuilder(
+        ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplicationName))
+     .AddAspNetCoreInstrumentation()
+     .AddOtlpExporter(opts => { opts.Endpoint = new Uri("http://localhost:4317"); });
+});
+```
+
+
+**3. Levantar Jagger**
+
+```
+docker run --name jaeger -p 13133:13133 -p 16686:16686 -p 4317:4317 -d --restart=unless-stopped jaegertracing/opentelemetry-all-in-one
+```
+
+Va a estar en localhost:16686
+
+**4. Para ver los contenedores activos**
+
+```
+docker container ls
+```
+
+**5. Para frenar el contenedor**
+
+```
+docker stop xxx (3 Primeros del ID del Contenedor)
+```
+
+**6. Para eliminar el contenedor**
+
+```
+docker rm /jaeger
+```
